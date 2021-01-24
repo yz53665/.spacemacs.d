@@ -18,7 +18,7 @@ This function should only modify configuration layer settings."
    ;; lazy install any layer that support lazy installation even the layers
    ;; listed in `dotspacemacs-configuration-layers'. `nil' disable the lazy
    ;; installation feature and you have to explicitly list a layer in the
-   ;; variable `dotspacemacs-configuration-layers' to install it.
+   ;; var
    ;; (default 'unused)
    dotspacemacs-enable-lazy-installation 'unused
 
@@ -33,9 +33,20 @@ This function should only modify configuration layer settings."
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(
+     html
+     (c-c++ :variables
+            c-c++-backend 'lsp-clangd
+            c++-enable-organize-includes-on-save t
+            c-c++-enable-clang-format-on-save t
+            c-c++-adopt-subprojects t
+            c-c++-lsp-enable-semantic-highlight 'rainbow
+            c-c++-enable-google-style t
+            )
      (python :variables
              python-backend 'anaconda
              python-sort-imports-on-save t
+             python-save-before-test t
+             python-auto-set-local-pyvenv-virtualenv 'on-project-switch
              )
      (ipython-notebook :variables ein-backend 'jupyter)
      ;; ----------------------------------------------------------------
@@ -45,7 +56,8 @@ This function should only modify configuration layer settings."
      ;; ----------------------------------------------------------------
      (auto-completion :variables
                       auto-completion-enable-sort-by-usage t
-                      auto-completion-enable-help-tooltip 'manual)
+                      auto-completion-enable-help-tooltip 'manual
+                      auto-completion-enable-snippets-in-popup t)
      ;;better-defaults
      emacs-lisp
      git
@@ -54,12 +66,15 @@ This function should only modify configuration layer settings."
      helm
      (dash :variables
            dash-autoload-common-docsets nil)
-     ;;lsp
+     lsp
      markdown
      multiple-cursors
      (org :variables
           org-want-todo-bindings t
-          org-projectile-file "TODOs.org")
+          org-export-headline-levels 3
+          org-projectile-file "TODOs.org"
+          org-latex-compiler "xelatex"
+          )
      (shell :variables
             shell-default-height 30
             shell-default-position 'bottom)
@@ -73,7 +88,9 @@ This function should only modify configuration layer settings."
      (latex :variables latex-build-engine 'xetex
             latex-build-command "LaTeX"
             latex-backend 'company-auctex
+            latex-refresh-preview t
             )
+     graphviz
      )
 
 
@@ -518,10 +535,10 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
-  (setq configuration-layer--elpa-archives
-               '(("melpa-cn" . "http://elpa.zilongshanren.com/melpa/")
-                 ("org-cn"   . "http://elpa.zilongshanren.com/org/")
-                 ("gnu-cn"   . "http://elpa.zilongshanren.com/gnu/")))
+  (setq configuration-layer-elpa-archives
+        '(("melpa-cn" . "http://elpa.emacs-china.org/melpa/")
+          ("org-cn"   . "http://elpa.emacs-china.org/org/")
+          ("gnu-cn"   . "http://elpa.emacs-china.org/gnu/")))
   )
 
 (defun dotspacemacs/user-load ()
@@ -537,18 +554,17 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
-  ;;setting the evil-escape
+  ;;setting the evil
   (setq-default evil-escape-key-sequence "jk")
   (setq-default evil-escape-delay 0.3)
+  (setq-default evil-surround-mode t)
 
   ;;GUI setting
   (setq cursor-type 'bar)
 
   ;;automatically toggle
   (spacemacs/toggle-auto-completion-on)
-  (spacemacs/toggle-golden-ratio-on)
   (spacemacs/toggle-centered-point-on)
-  (setq-default dotspacemacs-smartparens-strict-mode t)
   ;;toggle modeline
   (spacemacs/toggle-display-time-on)
   (spacemacs/toggle-mode-line-battery-on)
@@ -558,6 +574,70 @@ before packages are loaded."
   (spacemacs/set-leader-keys "os" 'org-save-all-org-buffers)
   (spacemacs/set-leader-keys "oh" 'helm-org-agenda-files-headings)
   (setq org-imge-actual-width '(500))
+  (setq org-journal-dir "~/qrqCode/note/journel/")
+  ;;org-mode capture setting
+  (setq org-capture-templates
+        '(("t" "Todo")
+          ("c" "clock-in")
+          ("e" "english")
+          ("ti" "Todo" entry
+           (file+headline "~/qrqCode/note/capture/gtd.org" "Tasks")
+           "* TODO %?\n\n")
+          ("tt" "Todo here" entry
+           (file+headline "~/qrqCode/note/capture/gtd.org" "Tasks")
+           "* TODO %?\n\n  %a")
+          ("cr" "Book Reading Task" entry
+           (file+headline"~/qrqCode/note/capture/task.org" "Reading")
+           "* PROCESSED %^{书名}\n%u\n%a\n\n" :clock-in t :clock-resume t)
+          ("ca" "start work at point" entry
+           (file+headline "~/qrqCode/note/capture/task.org" "Work")
+           "* PROCESSED %^{任务名}\n%u\n%a\n\n" :clock-in t :clock-resume t)
+          ("cs" "start work" entry
+           (file+headline "~/qrqCode/note/capture/task.org" "Work")
+           "* PROCESSED %^{任务名}\n%u\n\n" :clock-in t :clock-resume t)
+          ("j" "Journal" entry
+           (file+datetree "~/qrqCode/note/capture/journal.org")
+           "* %U - %^{heading} %^g\n  %?")
+          ("i" "Inbox thinking" entry
+           (file "~/qrqCode/note/capture/inbox.org")
+           "* %U - %^{heading} %^g\n %?\n\n")
+          ("b" "Billing" plain
+           (file+function "~/qrqCode/note/capture/billing.org" find-month-tree)
+           " | %U | %^{类别} | %^{描述} | %^{金额} |" :kill-buffer t)
+          ("ew" "English with explaination" plain
+           (file+datetree"~/qrqCode/note/capture/english.org" )
+           "%^C:  %^{解释}\n\n" :kill-buffer t)
+          ("en" "English without explaination" plain
+           (file+datetree"~/qrqCode/note/capture/english.org" )
+           "%^C\n\n  " :kill-buffer t)))
+
+
+  ;;function for billing
+  (defun get-year-and-month ()
+    (list (format-time-string "%Y 年") (format-time-string "%m 月")))
+
+
+  (defun find-month-tree ()
+    (let* ((path (get-year-and-month))
+           (level 1)
+           end)
+      (unless (derived-mode-p 'org-mode)
+        (error "Target buffer \"%s\" should be in Org mode" (current-buffer)))
+      (goto-char (point-min))             ;移动到 buffer 的开始位置
+      ;; 先定位表示年份的 headline，再定位表示月份的 headline
+      (dolist (heading path)
+        (let ((re (format org-complex-heading-regexp-format
+                          (regexp-quote heading)))
+              (cnt 0))
+          (if (re-search-forward re end t)
+              (goto-char (point-at-bol))  ;如果找到了 headline 就移动到对应的位置
+            (progn                        ;否则就新建一个 headline
+              (or (bolp) (insert "\n"))
+              (if (/= (point) (point-min)) (org-end-of-subtree t t))
+              (insert (make-string level ?*) " " heading "\n"))))
+        (setq level (1+ level))
+        (setq end (save-excursion (org-end-of-subtree t t))))
+      (org-end-of-subtree)))
 
   ;;setting of youdao-dictionary packages in chinese layer
   (spacemacs/declare-prefix "oy" "youdao-dictionary")
@@ -565,8 +645,6 @@ before packages are loaded."
   (spacemacs/set-leader-keys "oyi" 'youdao-dictionary-search-from-input)
   (spacemacs/set-leader-keys "oyT" 'youdao-dictionary-search-at-point)
 
-  ;;latex settings
-  (setq org-latex-compiler "xelatex")
   ;;latex template settings
   (with-eval-after-load 'ox-latex
     ;; http://orgmode.org/worg/org-faq.html#using-xelatex-for-pdf-export
@@ -620,7 +698,8 @@ This function is called at the very end of Spacemacs initialization."
      ("FIXME" . "#dc752f")
      ("XXX+" . "#dc752f")
      ("\\?\\?\\?+" . "#dc752f")))
- '(org-agenda-files '("~/qrqCode/note/books.org" "~/qrqCode/note/TODO.org"))
+ '(org-agenda-files
+   '("~/qrqCode/note/capture/gtd.org" "~/qrqCode/note/capture/task.org" "~/qrqCode/note/books.org" "~/qrqCode/note/TODO.org" "~/qrqCode/note/capture/inbox.org" "~/qrqCode/note/capture/journal.org"))
  '(org-todo-keyword-faces
    '(("TODO" . "#db7093")
      ("PROCESSED" . "#FFD700")
@@ -629,7 +708,7 @@ This function is called at the very end of Spacemacs initialization."
  '(org-todo-keywords
    '((sequence "TODO(t)" "PROCESSED(d!)" "BLOCKED(b!)" "TOREAD(r)" "|" "CANCELLED(c!)" "DONE(D!)")))
  '(package-selected-packages
-   '(auctex ein polymode anaphora websocket youdao-dictionary names chinese-word-at-point fcitx pyim pyim-basedict xr pangu-spacing find-by-pinyin-dired chinese-conv ace-pinyin pinyinlib company-quickhelp zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme modus-vivendi-theme modus-operandi-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme kaolin-themes jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme eziam-theme exotica-theme espresso-theme dracula-theme doom-themes django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme chocolate-theme autothemer cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme grip-mode github-search github-clone gist gh marshal logito pcache unfill mwim company-statistics lsp-ui lsp-origami helm-lsp pos-tip flyspell-popup origami helm-dash dash-docs dash-at-point xterm-color vterm terminal-here shell-pop multi-term eshell-z eshell-prompt-extras esh-help yapfify stickyfunc-enhance sphinx-doc pytest pyenv-mode py-isort poetry pippel pipenv pyvenv pip-requirements lsp-python-ms lsp-pyright live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope xcscope ggtags dap-mode lsp-treemacs bui lsp-mode dash-functional cython-mode counsel-gtags counsel swiper ivy company-anaconda blacken anaconda-mode pythonic yasnippet-snippets ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle restart-emacs rainbow-delimiters popwin pcre2el password-generator paradox overseer orgit org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nameless move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy forge font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
+   '(helm-rtags google-c-style flycheck-ycmd ycmd request-deferred flycheck-rtags rtags disaster cpp-auto-include ccls tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode web-completion-data add-node-modules-path graphviz-dot-mode auctex ein polymode anaphora websocket youdao-dictionary names chinese-word-at-point fcitx pyim pyim-basedict xr pangu-spacing find-by-pinyin-dired chinese-conv ace-pinyin pinyinlib company-quickhelp zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme modus-vivendi-theme modus-operandi-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme kaolin-themes jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme eziam-theme exotica-theme espresso-theme dracula-theme doom-themes django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme chocolate-theme autothemer cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme grip-mode github-search github-clone gist gh marshal logito pcache unfill mwim company-statistics lsp-ui lsp-origami helm-lsp pos-tip flyspell-popup origami helm-dash dash-docs dash-at-point xterm-color vterm terminal-here shell-pop multi-term eshell-z eshell-prompt-extras esh-help yapfify stickyfunc-enhance sphinx-doc pytest pyenv-mode py-isort poetry pippel pipenv pyvenv pip-requirements lsp-python-ms lsp-pyright live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope xcscope ggtags dap-mode lsp-treemacs bui lsp-mode dash-functional cython-mode counsel-gtags counsel swiper ivy company-anaconda blacken anaconda-mode pythonic yasnippet-snippets ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle restart-emacs rainbow-delimiters popwin pcre2el password-generator paradox overseer orgit org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nameless move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy forge font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
  '(pdf-view-midnight-colors '("#b2b2b2" . "#292b2e")))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
