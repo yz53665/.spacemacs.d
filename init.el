@@ -33,7 +33,7 @@ This function should only modify configuration layer settings."
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(
-     html
+     ;;html
      (c-c++ :variables
             c-c++-backend 'lsp-clangd
             c++-enable-organize-includes-on-save t
@@ -46,9 +46,8 @@ This function should only modify configuration layer settings."
              python-backend 'anaconda
              python-sort-imports-on-save t
              python-save-before-test t
-             python-auto-set-local-pyvenv-virtualenv 'on-project-switch
              )
-     (ipython-notebook :variables ein-backend 'jupyter)
+     semantic
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
@@ -78,19 +77,16 @@ This function should only modify configuration layer settings."
      (shell :variables
             shell-default-height 30
             shell-default-position 'bottom)
-     (spell-checking :variables enable-flyspell-auto-completion t
-                      enable-flyspell-auto-completion t)
+     (spell-checking :variables
+                     enable-flyspell-auto-completion t
+                     treemacs-use-git-mode 'deferred)
      version-control
-     treemacs
+     (treemacs :variables
+               treemacs-lock-width t
+               )
      themes-megapack
      (chinese :variables
               chinese-enable-youdao-dict t)
-     (latex :variables latex-build-engine 'xetex
-            latex-build-command "LaTeX"
-            latex-backend 'company-auctex
-            latex-refresh-preview t
-            )
-     graphviz
      )
 
 
@@ -108,7 +104,7 @@ This function should only modify configuration layer settings."
    dotspacemacs-frozen-packages '()
 
    ;; A list of packages that will not be installed and loaded.
-   dotspacemacs-excluded-packages '(company)
+   dotspacemacs-excluded-packages '()
 
    ;; Defines the behaviour of Spacemacs when installing packages.
    ;; Possible values are `used-only', `used-but-keep-unused' and `all'.
@@ -581,34 +577,34 @@ before packages are loaded."
           ("c" "clock-in")
           ("e" "english")
           ("ti" "Todo" entry
-           (file+headline "~/qrqCode/note/capture/gtd.org" "Tasks")
+           (file+headline "~/note/capture/gtd.org" "Tasks")
            "* TODO %?\n\n")
           ("tt" "Todo here" entry
-           (file+headline "~/qrqCode/note/capture/gtd.org" "Tasks")
+           (file+headline "~/note/capture/gtd.org" "Tasks")
            "* TODO %?\n\n  %a")
           ("cr" "Book Reading Task" entry
-           (file+headline"~/qrqCode/note/capture/task.org" "Reading")
+           (file+headline"~/note/capture/task.org" "Reading")
            "* PROCESSED %^{书名}\n%u\n%a\n\n" :clock-in t :clock-resume t)
           ("ca" "start work at point" entry
-           (file+headline "~/qrqCode/note/capture/task.org" "Work")
+           (file+headline "~/note/capture/task.org" "Work")
            "* PROCESSED %^{任务名}\n%u\n%a\n\n" :clock-in t :clock-resume t)
           ("cs" "start work" entry
-           (file+headline "~/qrqCode/note/capture/task.org" "Work")
+           (file+headline "~/note/capture/task.org" "Work")
            "* PROCESSED %^{任务名}\n%u\n\n" :clock-in t :clock-resume t)
           ("j" "Journal" entry
-           (file+datetree "~/qrqCode/note/capture/journal.org")
+           (file+datetree "~/note/capture/journal.org")
            "* %U - %^{heading} %^g\n  %?")
           ("i" "Inbox thinking" entry
-           (file "~/qrqCode/note/capture/inbox.org")
+           (file "~/note/capture/inbox.org")
            "* %U - %^{heading} %^g\n %?\n\n")
           ("b" "Billing" plain
-           (file+function "~/qrqCode/note/capture/billing.org" find-month-tree)
+           (file+function "~/note/capture/billing.org" find-month-tree)
            " | %U | %^{类别} | %^{描述} | %^{金额} |" :kill-buffer t)
           ("ew" "English with explaination" plain
-           (file+datetree"~/qrqCode/note/capture/english.org" )
+           (file+datetree"~/note/capture/english.org" )
            "%^C:  %^{解释}\n\n" :kill-buffer t)
           ("en" "English without explaination" plain
-           (file+datetree"~/qrqCode/note/capture/english.org" )
+           (file+datetree"~/note/capture/english.org" )
            "%^C\n\n  " :kill-buffer t)))
 
 
@@ -699,7 +695,7 @@ This function is called at the very end of Spacemacs initialization."
      ("XXX+" . "#dc752f")
      ("\\?\\?\\?+" . "#dc752f")))
  '(org-agenda-files
-   '("~/qrqCode/note/capture/gtd.org" "~/qrqCode/note/capture/task.org" "~/qrqCode/note/books.org" "~/qrqCode/note/TODO.org" "~/qrqCode/note/capture/inbox.org" "~/qrqCode/note/capture/journal.org"))
+   '("~/note/capture/gtd.org" "~/note/capture/inbox.org" "~/note/capture/journal.org"))
  '(org-todo-keyword-faces
    '(("TODO" . "#db7093")
      ("PROCESSED" . "#FFD700")
@@ -708,7 +704,7 @@ This function is called at the very end of Spacemacs initialization."
  '(org-todo-keywords
    '((sequence "TODO(t)" "PROCESSED(d!)" "BLOCKED(b!)" "TOREAD(r)" "|" "CANCELLED(c!)" "DONE(D!)")))
  '(package-selected-packages
-   '(helm-rtags google-c-style flycheck-ycmd ycmd request-deferred flycheck-rtags rtags disaster cpp-auto-include ccls tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode web-completion-data add-node-modules-path graphviz-dot-mode auctex ein polymode anaphora websocket youdao-dictionary names chinese-word-at-point fcitx pyim pyim-basedict xr pangu-spacing find-by-pinyin-dired chinese-conv ace-pinyin pinyinlib company-quickhelp zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme modus-vivendi-theme modus-operandi-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme kaolin-themes jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme eziam-theme exotica-theme espresso-theme dracula-theme doom-themes django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme chocolate-theme autothemer cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme grip-mode github-search github-clone gist gh marshal logito pcache unfill mwim company-statistics lsp-ui lsp-origami helm-lsp pos-tip flyspell-popup origami helm-dash dash-docs dash-at-point xterm-color vterm terminal-here shell-pop multi-term eshell-z eshell-prompt-extras esh-help yapfify stickyfunc-enhance sphinx-doc pytest pyenv-mode py-isort poetry pippel pipenv pyvenv pip-requirements lsp-python-ms lsp-pyright live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope xcscope ggtags dap-mode lsp-treemacs bui lsp-mode dash-functional cython-mode counsel-gtags counsel swiper ivy company-anaconda blacken anaconda-mode pythonic yasnippet-snippets ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle restart-emacs rainbow-delimiters popwin pcre2el password-generator paradox overseer orgit org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nameless move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy forge font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
+   '(treemacs-all-the-icons srefactor lsp-latex helm-rtags google-c-style flycheck-ycmd ycmd request-deferred flycheck-rtags rtags disaster cpp-auto-include ccls tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode web-completion-data add-node-modules-path graphviz-dot-mode auctex ein polymode anaphora websocket youdao-dictionary names chinese-word-at-point fcitx pyim pyim-basedict xr pangu-spacing find-by-pinyin-dired chinese-conv ace-pinyin pinyinlib company-quickhelp zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme modus-vivendi-theme modus-operandi-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme kaolin-themes jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme eziam-theme exotica-theme espresso-theme dracula-theme doom-themes django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme chocolate-theme autothemer cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme grip-mode github-search github-clone gist gh marshal logito pcache unfill mwim company-statistics lsp-ui lsp-origami helm-lsp pos-tip flyspell-popup origami helm-dash dash-docs dash-at-point xterm-color vterm terminal-here shell-pop multi-term eshell-z eshell-prompt-extras esh-help yapfify stickyfunc-enhance sphinx-doc pytest pyenv-mode py-isort poetry pippel pipenv pyvenv pip-requirements lsp-python-ms lsp-pyright live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope xcscope ggtags dap-mode lsp-treemacs bui lsp-mode dash-functional cython-mode counsel-gtags counsel swiper ivy company-anaconda blacken anaconda-mode pythonic yasnippet-snippets ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle restart-emacs rainbow-delimiters popwin pcre2el password-generator paradox overseer orgit org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nameless move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy forge font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
  '(pdf-view-midnight-colors '("#b2b2b2" . "#292b2e")))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
