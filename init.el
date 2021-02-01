@@ -69,6 +69,8 @@ This function should only modify configuration layer settings."
      markdown
      multiple-cursors
      (org :variables
+          org-enable-org-journal-support t
+          org-enable-roam-support t
           org-want-todo-bindings t
           org-export-headline-levels 3
           org-projectile-file "TODOs.org"
@@ -570,18 +572,58 @@ before packages are loaded."
   (spacemacs/set-leader-keys "os" 'org-save-all-org-buffers)
   (spacemacs/set-leader-keys "oh" 'helm-org-agenda-files-headings)
   (setq org-imge-actual-width '(500))
-  (setq org-journal-dir "~/qrqCode/note/journel/")
+  ;; org-jouranl configuration
+  (setq org-journal-dir "~/note/journel/")
+  (setq org-journal-file-type 'weekly)
+  (setq org-journal-file-format "%Y-%m-%d")
+  (setq org-journal-date-prefix "* ")
+  (setq org-journal-date-format "%Y-%m-%d, %A")
+  (setq org-journal-file-header "#+TITLE: Week %U Journal")
+  ;; org-roam configuration
+  (setq org-roam-directory "~/note/roam/")
+  (setq org-roam-capture-templates
+        '(
+          ("c" "code" plain (function org-roam-capture--get-point)
+           "- 语言类型: %^{语言}\n* %^{标题}\n  %?\n* 实例:\n"
+           :file-name "%<%Y%m%d%H%M%S>-${slug}"
+           :head "#+title: ${title}\n#+roam_alias: \n#+roam_tags: coding\n\n"
+           :unnarrowed t
+           :empty-lines 1)
+          ("i" "idea" plain (function org-roam-capture--get-point)
+           "%?"
+           :file-name "%<%Y%m%d%H%M%S>-${slug}"
+           :head "#+title: ${title}\n#+roam_alias: \n#+roam_tags: idea\n\n"
+           :unnarrowed t
+           :empty-lines 1)
+          ("t" "Term" plain (function org-roam-capture--get-point)
+           "- 领域: %^{术语所属领域}\n- 释义:"
+           :file-name "%<%Y%m%d%H%M%S>-${slug}"
+           :head "#+title: ${title}\n#+roam_alias:\n#+roam_tags: Term\n\n"
+           :unnarrowed t
+           :empty-lines 1)
+          ("p" "Paper Note" plain (function org-roam-capture--get-point)
+            "* 相关工作\n\n%?\n* 观点\n\n* 模型和方法\n\n* 实验\n\n* 结论\n"
+            :file-name "%<%Y%m%d%H%M%S>-${slug}"
+            :head "#+title: ${title}\n#+roam_alias:\n#+roam_tags: Paper\n\n"
+            :unnarrowed t
+            :empty-lines 1)
+          ))
+  (setq org-roam-capture-immediate-template
+        '("d" "default" plain (function org-roam-capture--get-point)
+          "%?"
+          :head "#+title: ${title}\n#+roam_alias:\n#+roam_tags: \n\n"
+          :unnarrowed t
+          :empty-lines 1))
   ;;org-mode capture setting
   (setq org-capture-templates
         '(("t" "Todo")
           ("c" "clock-in")
-          ("e" "english")
           ("ti" "Todo" entry
            (file+headline "~/note/capture/gtd.org" "Tasks")
            "* TODO %?\n\n")
           ("tt" "Todo here" entry
            (file+headline "~/note/capture/gtd.org" "Tasks")
-           "* TODO %?\n\n  %a")
+           "* TODO %?\n  %a/n")
           ("cr" "Book Reading Task" entry
            (file+headline"~/note/capture/task.org" "Reading")
            "* PROCESSED %^{书名}\n%u\n%a\n\n" :clock-in t :clock-resume t)
@@ -591,21 +633,10 @@ before packages are loaded."
           ("cs" "start work" entry
            (file+headline "~/note/capture/task.org" "Work")
            "* PROCESSED %^{任务名}\n%u\n\n" :clock-in t :clock-resume t)
-          ("j" "Journal" entry
-           (file+datetree "~/note/capture/journal.org")
-           "* %U - %^{heading} %^g\n  %?")
-          ("i" "Inbox thinking" entry
-           (file "~/note/capture/inbox.org")
-           "* %U - %^{heading} %^g\n %?\n\n")
           ("b" "Billing" plain
            (file+function "~/note/capture/billing.org" find-month-tree)
            " | %U | %^{类别} | %^{描述} | %^{金额} |" :kill-buffer t)
-          ("ew" "English with explaination" plain
-           (file+datetree"~/note/capture/english.org" )
-           "%^C:  %^{解释}\n\n" :kill-buffer t)
-          ("en" "English without explaination" plain
-           (file+datetree"~/note/capture/english.org" )
-           "%^C\n\n  " :kill-buffer t)))
+           ))
 
 
   ;;function for billing
@@ -704,7 +735,7 @@ This function is called at the very end of Spacemacs initialization."
  '(org-todo-keywords
    '((sequence "TODO(t)" "PROCESSED(d!)" "BLOCKED(b!)" "TOREAD(r)" "|" "CANCELLED(c!)" "DONE(D!)")))
  '(package-selected-packages
-   '(treemacs-all-the-icons srefactor lsp-latex helm-rtags google-c-style flycheck-ycmd ycmd request-deferred flycheck-rtags rtags disaster cpp-auto-include ccls tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode web-completion-data add-node-modules-path graphviz-dot-mode auctex ein polymode anaphora websocket youdao-dictionary names chinese-word-at-point fcitx pyim pyim-basedict xr pangu-spacing find-by-pinyin-dired chinese-conv ace-pinyin pinyinlib company-quickhelp zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme modus-vivendi-theme modus-operandi-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme kaolin-themes jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme eziam-theme exotica-theme espresso-theme dracula-theme doom-themes django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme chocolate-theme autothemer cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme grip-mode github-search github-clone gist gh marshal logito pcache unfill mwim company-statistics lsp-ui lsp-origami helm-lsp pos-tip flyspell-popup origami helm-dash dash-docs dash-at-point xterm-color vterm terminal-here shell-pop multi-term eshell-z eshell-prompt-extras esh-help yapfify stickyfunc-enhance sphinx-doc pytest pyenv-mode py-isort poetry pippel pipenv pyvenv pip-requirements lsp-python-ms lsp-pyright live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope xcscope ggtags dap-mode lsp-treemacs bui lsp-mode dash-functional cython-mode counsel-gtags counsel swiper ivy company-anaconda blacken anaconda-mode pythonic yasnippet-snippets ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle restart-emacs rainbow-delimiters popwin pcre2el password-generator paradox overseer orgit org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nameless move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy forge font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
+   '(org-roam emacsql-sqlite3 org-journal treemacs-all-the-icons srefactor lsp-latex helm-rtags google-c-style flycheck-ycmd ycmd request-deferred flycheck-rtags rtags disaster cpp-auto-include ccls tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode web-completion-data add-node-modules-path graphviz-dot-mode auctex ein polymode anaphora websocket youdao-dictionary names chinese-word-at-point fcitx pyim pyim-basedict xr pangu-spacing find-by-pinyin-dired chinese-conv ace-pinyin pinyinlib company-quickhelp zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme modus-vivendi-theme modus-operandi-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme kaolin-themes jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme eziam-theme exotica-theme espresso-theme dracula-theme doom-themes django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme chocolate-theme autothemer cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme grip-mode github-search github-clone gist gh marshal logito pcache unfill mwim company-statistics lsp-ui lsp-origami helm-lsp pos-tip flyspell-popup origami helm-dash dash-docs dash-at-point xterm-color vterm terminal-here shell-pop multi-term eshell-z eshell-prompt-extras esh-help yapfify stickyfunc-enhance sphinx-doc pytest pyenv-mode py-isort poetry pippel pipenv pyvenv pip-requirements lsp-python-ms lsp-pyright live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope xcscope ggtags dap-mode lsp-treemacs bui lsp-mode dash-functional cython-mode counsel-gtags counsel swiper ivy company-anaconda blacken anaconda-mode pythonic yasnippet-snippets ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle restart-emacs rainbow-delimiters popwin pcre2el password-generator paradox overseer orgit org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nameless move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy forge font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
  '(pdf-view-midnight-colors '("#b2b2b2" . "#292b2e")))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
