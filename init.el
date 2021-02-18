@@ -686,6 +686,8 @@ before packages are loaded."
                                         ; Compact the block agenda view
   (setq org-agenda-compact-blocks t)
 
+  (setq org-agenda-span 'day)
+
                                         ; Custom agenda command definitions
   (setq org-agenda-custom-commands
         (quote (("N" "Notes" tags "NOTE"
@@ -1105,6 +1107,7 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
           ))
   ;;org-refile setting
                                         ; Targets include this file and any file contributing to the agenda - up to 9 levels deep
+  ;; org-refile 设置
   (setq org-refile-targets (quote ((nil :maxlevel . 9)
                                    (org-agenda-files :maxlevel . 9))))
 
@@ -1127,6 +1130,31 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
 
   (setq org-refile-target-verify-function 'bh/verify-refile-target)
 
+  ;; org-archive 设置
+  (setq org-archive-mark-done nil)
+  (setq org-archive-location "%s_archive::* Archived Tasks")
+  (defun bh/skip-non-archivable-tasks ()
+  "Skip trees that are not available for archiving"
+  (save-restriction
+    (widen)
+    ;; Consider only tasks with done todo headings as archivable candidates
+    (let ((next-headline (save-excursion (or (outline-next-heading) (point-max))))
+          (subtree-end (save-excursion (org-end-of-subtree t))))
+      (if (member (org-get-todo-state) org-todo-keywords-1)
+          (if (member (org-get-todo-state) org-done-keywords)
+              (let* ((daynr (string-to-int (format-time-string "%d" (current-time))))
+                     (a-month-ago (* 60 60 24 (+ daynr 1)))
+                     (last-month (format-time-string "%Y-%m-" (time-subtract (current-time) (seconds-to-time a-month-ago))))
+                     (this-month (format-time-string "%Y-%m-" (current-time)))
+                     (subtree-is-current (save-excursion
+                                           (forward-line 1)
+                                           (and (< (point) subtree-end)
+                                                (re-search-forward (concat last-month "\\|" this-month) subtree-end t)))))
+                (if subtree-is-current
+                    subtree-end ; Has a date in this month or last month, skip it
+                  nil))  ; available to archive
+            (or subtree-end (point-max)))
+        next-headline))))
 
   ;;function for billing
   (defun get-year-and-month ()
