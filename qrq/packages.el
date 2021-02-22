@@ -31,7 +31,7 @@
 
 (defconst qrq-packages
   '(
-    org-roam-sercer
+    org-roam-server
     (org-roam-server :location elpa)
     )
   "The list of Lisp packages required by the qrq layer.
