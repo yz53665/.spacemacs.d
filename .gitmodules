@@ -1,0 +1,6 @@
+[submodule "media"]
+	path = media
+	url = http://github.com/Potpourri/spacemacs-emms.git
+[submodule "w3m"]
+	path = w3m
+	url = https://github.com/venmos/w3m-layer.git
