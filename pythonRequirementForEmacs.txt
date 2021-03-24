@@ -1,0 +1,16 @@
+autoflake==1.4
+black==20.8b1
+epc==0.0.5
+flake8 @ file:///tmp/build/80754af9/flake8_1601911421857/work
+importmagic==0.1.7
+ipython==7.19.0
+isort==5.7.0
+jedi==0.18.0
+json-rpc==1.8.1
+pyflakes==2.2.0
+pyls-black==0.4.6
+pyls-isort @ file:///home/conda/feedstock_root/build_artifacts/pyls-isort_1602624628603/work
+pyls-mypy @ file:///home/conda/feedstock_root/build_artifacts/pyls-mypy_1595469357481/work
+python-jsonrpc-server @ file:///tmp/build/80754af9/python-jsonrpc-server_1600278539111/work
+service-factory==0.1.6
+yapf @ file:///tmp/build/80754af9/yapf_1593528177422/work

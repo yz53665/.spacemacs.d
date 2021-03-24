@@ -47,6 +47,7 @@ This function should only modify configuration layer settings."
              python-sort-imports-on-save t
              python-save-before-test t
              )
+     ipython-notebook
      semantic
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
@@ -1631,8 +1632,10 @@ rulesepcolor= \\color{ red!20!green!20!blue!20}
            )
 
           ("org" :components ("org-notes" "org-static"))
-
           ))
+  ;; org mobil settings
+  (setq org-mobile-directory "~/Library/Mobile Documents/iCloud~com~mobileorg~mobileorg/Documents")
+  (setq org-directory "~/note/capture/")
   )
 
 ;; Do not write anything past this comment. This is where Emacs will
