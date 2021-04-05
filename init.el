@@ -60,7 +60,8 @@ This function should only modify configuration layer settings."
                       auto-completion-enable-snippets-in-popup nil)
      emacs-lisp
      git
-     (ivy :variables ivy-enable-advanced-buffer-information nil)
+     helm
+     ivy
      (lsp :variables
           lsp-modeline-diagnostics-enable nil)
      (org :variables
@@ -1633,9 +1634,9 @@ rulesepcolor= \\color{ red!20!green!20!blue!20}
 
           ("org" :components ("org-notes" "org-static"))
           ))
-  ;; org mobil settings
-  (setq org-mobile-directory "~/Library/Mobile Documents/iCloud~com~mobileorg~mobileorg/Documents")
-  (setq org-directory "~/note/capture/")
+  ;; 修复搜索时出现 error code 2
+  (setq counsel-ag-base-command "ag -M 240 --with-filename --no-heading--line-number --color never %s || true")
+  (setq counsel-rg-base-command "rg -M 240 --with-filename --no-heading--line-number --color never %s || true")
   )
 
 ;; Do not write anything past this comment. This is where Emacs will
@@ -1686,9 +1687,13 @@ This function is called at the very end of Spacemacs initialization."
  '(org-agenda-files '("~/note/capture/"))
  '(org-clock-out-remove-zero-time-clocks t)
  '(org-download-screenshot-method "screencapture -i %s")
+ '(org-edit-src-auto-save-idle-delay 10)
+ '(org-src-preserve-indentation t)
+ '(org-src-window-setup 'split-window-below)
  '(org-tags-exclude-from-inheritance '("NOTE" "ARTICAL"))
  '(package-selected-packages
    '(helm-emms emms-state emms helm-w3m w3m counsel-dash helm helm-core ivy-rich wgrep smex lsp-ivy ivy-yasnippet ivy-xref ivy-rtags ivy-purpose ivy-hydra ivy-avy counsel-projectile counsel-css web-mode web-beautify company-web conda org-roam-server ox-hugo org-roam emacsql-sqlite3 org-journal treemacs-all-the-icons srefactor lsp-latex helm-rtags google-c-style flycheck-ycmd ycmd request-deferred flycheck-rtags rtags disaster cpp-auto-include ccls tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode web-completion-data add-node-modules-path graphviz-dot-mode auctex ein polymode anaphora websocket youdao-dictionary names chinese-word-at-point fcitx pyim pyim-basedict xr pangu-spacing find-by-pinyin-dired chinese-conv ace-pinyin pinyinlib company-quickhelp zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme modus-vivendi-theme modus-operandi-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme kaolin-themes jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme eziam-theme exotica-theme espresso-theme dracula-theme doom-themes django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme chocolate-theme autothemer cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme grip-mode github-search github-clone gist gh marshal logito pcache unfill mwim company-statistics lsp-ui lsp-origami helm-lsp pos-tip flyspell-popup origami helm-dash dash-docs dash-at-point xterm-color vterm terminal-here shell-pop multi-term eshell-z eshell-prompt-extras esh-help yapfify stickyfunc-enhance sphinx-doc pytest pyenv-mode py-isort poetry pippel pipenv pyvenv pip-requirements lsp-python-ms lsp-pyright live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope xcscope ggtags dap-mode lsp-treemacs bui lsp-mode dash-functional cython-mode counsel-gtags counsel swiper ivy company-anaconda blacken anaconda-mode pythonic yasnippet-snippets ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle restart-emacs rainbow-delimiters popwin pcre2el password-generator paradox overseer orgit org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nameless move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy forge font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
+ '(paradox-github-token t)
  '(pdf-view-midnight-colors '("#b2b2b2" . "#292b2e"))
  '(pyim-dicts nil)
  '(w3m-search-default-engine "baidu")
