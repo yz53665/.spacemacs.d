@@ -32,8 +32,7 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(
-     html
+   '(protobuf
      (c-c++ :variables
             c-c++-backend 'lsp-clangd
             c++-enable-organize-includes-on-save t
@@ -42,13 +41,16 @@ This function should only modify configuration layer settings."
             c-c++-lsp-enable-semantic-highlight 'rainbow
             c-c++-enable-google-style t
             )
+
      (python :variables
              python-backend 'anaconda
              python-sort-imports-on-save t
              python-save-before-test t
              )
-     ipython-notebook
-     semantic
+     (rust :variables
+           rust-backend 'racer
+           rust-format-on-save t)
+     ;;semantic
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
@@ -56,37 +58,42 @@ This function should only modify configuration layer settings."
      ;; ----------------------------------------------------------------
      (auto-completion :variables
                       auto-completion-enable-sort-by-usage t
-                      auto-completion-enable-help-tooltip nil
-                      auto-completion-enable-snippets-in-popup nil)
+                      auto-completion-complete-with-key-sequence "jj"
+                      auto-completion-enable-help-tooltip 'manual
+                      auto-completion-enable-snippets-in-popup nil
+                      auto-completion-idle-delay 0.1
+                      )
      emacs-lisp
      git
-     helm
      ivy
      (lsp :variables
-          lsp-modeline-diagnostics-enable nil)
+          lsp-modeline-diagnostics-enable nil
+          )
+
      (org :variables
           org-enable-hugo-support t
-          org-enable-org-journal-support t
+          org-enable-org-journal-support nil
           org-enable-roam-support t
           org-want-todo-bindings t
           org-export-headline-levels 3
           org-projectile-file "TODOs.org"
           org-latex-compiler "xelatex"
           )
+
      (shell :variables
             shell-default-height 30
             shell-default-position 'bottom)
      ;; version-control
+     markdown
      (treemacs :variables
                treemacs-lock-width t
                )
+
+     (ipython-notebook :variables
+                       ein-backend 'jupyter)
      themes-megapack
      (chinese :variables
               chinese-enable-youdao-dict t)
-     (dash :variables
-           dash-docs-docset-newpath "~/Library/Application Support/Dash/DocSets")
-     w3m
-     media
      qrq
      )
 
@@ -554,6 +561,9 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
+  (spacemacs|add-company-backends
+    :backends company-anaconda
+    :modes ein:notebook-mode)
   ;;setting the evil
   (setq-default evil-escape-key-sequence "jk")
   (setq-default evil-escape-delay 0.3)
@@ -564,7 +574,6 @@ before packages are loaded."
   (spacemacs//set-monospaced-font   "Meslo LG S for Powerline" "Hiragino Sans GB" 14 16)
 
   ;;automatically toggle
-  (spacemacs/toggle-centered-point-globally-on)
   (spacemacs/toggle-fill-column-indicator-globally-on)
   ;;toggle modeline
   (spacemacs/toggle-display-time-on)
@@ -580,13 +589,6 @@ before packages are loaded."
   ;; text-align setting
   (spacemacs/set-leader-keys "xax" 'algin-regexp)
 
-  ;; org-jouranl configuration
-  (setq org-journal-dir "~/note/journel/")
-  (setq org-journal-file-type 'weekly)
-  (setq org-journal-file-format "%Y-%m-%d")
-  (setq org-journal-date-prefix "* ")
-  (setq org-journal-date-format "%Y-%m-%d, %A")
-  (setq org-journal-file-header "#+TITLE: Week %U Journal")
   ;; org-roam configuration
   (setq org-roam-directory "~/note/roam/")
   (setq org-roam-capture-templates
@@ -702,7 +704,7 @@ before packages are loaded."
                 (org-agenda-sorting-strategy
                  '(todo-state-down effort-up category-keep))))
               (" " "Agenda"
-               ((agenda "" nil)
+               ((agenda " " nil)
                 (tags "REFILE"
                       ((org-agenda-overriding-header "Tasks to Refile")
                        (org-tags-match-list-sublevels nil)))
@@ -768,7 +770,14 @@ before packages are loaded."
                                         ; 取消 org-agenda 默认的 stuck 视图
   (setq org-stuck-projects (quote ("" nil nil "")))
                                         ; org-agenda-clock 函数及设置
-  ;;
+
+  (defun qrq/file-name-nosuffix ()
+    (let (str)
+      (setq str (file-name-nondirectory (buffer-file-name)))
+      (string-match "^\\([^\\.]+\\)" str)
+      (match-string 1 str)
+      )
+    )
   ;; Resume clocking task when emacs is restarted
   (org-clock-persistence-insinuate)
   ;;
@@ -1100,7 +1109,7 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
           ("n" "note" entry (file "~/note/capture/refile.org")
            "* %^{标题} :NOTE:\n  %U\n  %?\n")
           ("m" "会议" entry (file "~/note/capture/refile.org")
-           "* %U - 和%^{会议对象}的会议 :MEETING:\n%?" :clock-in t :clock-resume t)
+           "* %U - %^{会议对象}的会议 :MEETING:\n%?" :clock-in t :clock-resume t)
           ("p" "电话" entry (file "~/note/capture/refile.org")
            "* %U - 与%^{通话对象}的电话 :PHONE:\n%?" :clock-in t :clock-resume t)
           ("h" "Habit" entry (file "~/note/capture/refile.org")
@@ -1441,203 +1450,67 @@ so change the default 'F' binding in the agenda to allow both"
   (add-to-list 'org-latex-packages-alist
                '("Lenny" "fncychap" t))
 
-  (add-to-list 'org-latex-classes
-               '("lengyue-org-book"
-                 "\\documentclass{book}
-\\usepackage[slantfont, boldfont]{xeCJK}
-% chapter set
-\\usepackage{titlesec}
-\\usepackage{hyperref}
+(with-eval-after-load 'lsp-mode
 
-[NO-DEFAULT-PACKAGES]
-[PACKAGES]
+  ;; enable log only for debug
+  (setq lsp-log-io nil)
 
+  ;; use `evil-matchit' instead
+  (setq lsp-enable-folding nil)
 
+  ;; no real time syntax check
+  (setq lsp-diagnostic-package :none)
 
-\\setCJKmainfont{WenQuanYi Micro Hei} % 设置缺省中文字体
-\\setCJKsansfont{WenQuanYi Micro Hei}
-\\setCJKmonofont{WenQuanYi Micro Hei Mono}
+  ;; handle yasnippet by myself
+  (setq lsp-enable-snippet nil)
 
-\\setmainfont{DejaVu Sans} % 英文衬线字体
-\\setsansfont{DejaVu Serif} % 英文无衬线字体
-\\setmonofont{DejaVu Sans Mono}
-%\\setmainfont{WenQuanYi Micro Hei} % 设置缺省中文字体
-%\\setsansfont{WenQuanYi Micro Hei}
-%\\setmonofont{WenQuanYi Micro Hei Mono}
+  ;; use `company-ctags' only.
+  ;; Please note `company-lsp' is automatically enabled if installed
+  (setq lsp-enable-completion-at-point nil)
 
-%如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
-\\defaultfontfeatures{Mapping=tex-text}
+  ;; turn off for better performance
+  (setq lsp-enable-symbol-highlighting nil)
 
-% 中文断行
-\\XeTeXlinebreaklocale \"zh\"
-\\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
+  ;; use ffip instead
+  (setq lsp-enable-links nil)
 
-% 代码设置
-\\lstset{numbers=left,
-numberstyle= \\tiny,
-keywordstyle= \\color{ blue!70},commentstyle=\\color{red!50!green!50!blue!50},
-frame=shadowbox,
-breaklines=true,
-rulesepcolor= \\color{ red!20!green!20!blue!20}
-}
+  ;; auto restart lsp
+  (setq lsp-restart 'auto-restart)
 
-[EXTRA]
-"
-                 ("\\chapter{%s}" . "\\chapter*{%s}")
-                 ("\\section{%s}" . "\\section*{%s}")
-                 ("\\subsection{%s}" . "\\subsection*{%s}")
-                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-                 ("\\paragraph{%s}" . "\\paragraph*{%s}")
-                 ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+  ;; @see https://github.com/emacs-lsp/lsp-mode/pull/1498 and code related to auto configure.
+  ;; Require clients could be slow.
+  ;; I only load `lsp-clients' because it includes the js client which I'm interested
+  (setq lsp-client-packages '(lsp-clients))
 
-  (add-to-list 'org-latex-classes
-               '("lengyue-org-article"
-                 "\\documentclass{article}
-\\usepackage[slantfont, boldfont]{xeCJK}
-\\usepackage{titlesec}
-\\usepackage{hyperref}
+  ;; don't ping LSP lanaguage server too frequently
+  (defvar lsp-on-touch-time 0)
+  (defadvice lsp-on-change (around lsp-on-change-hack activate)
+    ;; don't run `lsp-on-change' too frequently
+    (when (> (- (float-time (current-time))
+                lsp-on-touch-time) 30) ;; 30 seconds
+      (setq lsp-on-touch-time (float-time (current-time)))
+      ad-do-it)))
 
-[NO-DEFAULT-PACKAGES]
-[PACKAGES]
+(defun my-connect-lsp (&optional no-reconnect)
+  "Connect lsp server.  If NO-RECONNECT is t, don't shutdown existing lsp connection."
+  (interactive "P")
+  (when (and (not no-reconnect)
+             (fboundp 'lsp-disconnect))
+    (lsp-disconnect))
+  (when (and buffer-file-name
+             (not (member (file-name-extension buffer-file-name)
+                          '("json"))))
+    (unless (and (boundp 'lsp-mode) lsp-mode)
+      (if (derived-mode-p 'js2-mode) (setq-local lsp-enable-imenu nil))
+      (lsp-deferred))))
 
-\\parindent 2em
+(add-hook 'c++-mode-hook #'my-connect-lsp)
+(add-hook 'c-mode-hook #'my-connect-lsp)
 
-\\setCJKmainfont{WenQuanYi Micro Hei} % 设置缺省中文字体
-\\setCJKsansfont{WenQuanYi Micro Hei}
-\\setCJKmonofont{WenQuanYi Micro Hei Mono}
+;; yasnippet 的补全快捷键
+(global-set-key (kbd "C-;") 'hippie-expand)
 
-\\setmainfont{DejaVu Sans} % 英文衬线字体
-\\setsansfont{DejaVu Serif} % 英文无衬线字体
-\\setmonofont{DejaVu Sans Mono}
-%\\setmainfont{WenQuanYi Micro Hei} % 设置缺省中文字体
-%\\setsansfont{WenQuanYi Micro Hei}
-%\\setmonofont{WenQuanYi Micro Hei Mono}
-
-%如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
-\\defaultfontfeatures{Mapping=tex-text}
-
-% 中文断行
-\\XeTeXlinebreaklocale \"zh\"
-\\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
-
-% 代码设置
-\\lstset{numbers=left,
-numberstyle= \\tiny,
-keywordstyle= \\color{ blue!70},commentstyle=\\color{red!50!green!50!blue!50},
-frame=shadowbox,
-breaklines=true,
-rulesepcolor= \\color{ red!20!green!20!blue!20}
-}
-
-[EXTRA]
-"
-                 ("\\section{%s}" . "\\section*{%s}")
-                 ("\\subsection{%s}" . "\\subsection*{%s}")
-                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-                 ("\\paragraph{%s}" . "\\paragraph*{%s}")
-                 ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
-
-  (add-to-list 'org-latex-classes
-               '("lengyue-org-beamer"
-                 "\\documentclass{beamer}
-\\usepackage[slantfont, boldfont]{xeCJK}
-% beamer set
-\\usepackage[none]{hyphenat}
-\\usepackage[abs]{overpic}
-
-[NO-DEFAULT-PACKAGES]
-[PACKAGES]
-
-\\setCJKmainfont{WenQuanYi Micro Hei} % 设置缺省中文字体
-\\setCJKsansfont{WenQuanYi Micro Hei}
-\\setCJKmonofont{WenQuanYi Micro Hei Mono}
-
-\\setmainfont{DejaVu Sans} % 英文衬线字体
-\\setsansfont{DejaVu Serif} % 英文无衬线字体
-\\setmonofont{DejaVu Sans Mono}
-%\\setmainfont{WenQuanYi Micro Hei} % 设置缺省中文字体
-%\\setsansfont{WenQuanYi Micro Hei}
-%\\setmonofont{WenQuanYi Micro Hei Mono}
-
-%如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
-\\defaultfontfeatures{Mapping=tex-text}
-
-% 中文断行
-\\XeTeXlinebreaklocale \"zh\"
-\\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
-
-% 代码设置
-\\lstset{numbers=left,
-numberstyle= \\tiny,
-keywordstyle= \\color{ blue!70},commentstyle=\\color{red!50!green!50!blue!50},
-frame=shadowbox,
-breaklines=true,
-rulesepcolor= \\color{ red!20!green!20!blue!20}
-}
-
-[EXTRA]
-"
-                 ("\\section{%s}" . "\\section*{%s}")
-                 ("\\subsection{%s}" . "\\subsection*{%s}")
-                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-                 ("\\paragraph{%s}" . "\\paragraph*{%s}")
-                 ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
-
-  (setq org-latex-pdf-process
-        '("xelatex -interaction nonstopmode -output-directory %o %f"
-          ;;"biber %b" "xelatex -interaction nonstopmode -output-directory %o %f"
-          "bibtex %b"
-          "xelatex -interaction nonstopmode -output-directory %o %f"
-          "xelatex -interaction nonstopmode -output-directory %o %f"))
-
-  ;; media layer 设置
-  (setq emms-source-file-default-directory "~/Music/酷狗音乐/BQ")
-  ;; w3m 设置
-  (setq w3m-home-page "www.baidu.com")
-  ;; W3M Home Page
-  (setq w3m-default-display-inline-images t)
-  (setq w3m-default-toggle-inline-images t)
-  ;; W3M default display images
-  (setq w3m-command-arguments '("-cookie" "-F"))
-  (setq w3m-use-cookies t)
-  ;; W3M use cookies
-  (setq browse-url-browser-function 'w3m-browse-url)
-  ;; Browse url function use w3m
-  (setq w3m-view-this-url-new-session-in-background t)
-  ;; W3M view url new session in background
-
-  ;; org publish project
-  (require 'ox-publish)
-  (setq org-publish-project-alist
-        '(
-
-          ("org-notes"
-           :base-directory "~/note/org/"
-           :base-extension "org"
-           :publishing-directory "~/note/public_html/"
-           :recursive t
-           :publishing-function org-html-publish-to-html
-           :headline-levels 4             ; Just the default for this project.
-           :auto-preamble t
-           :auto-sitemap t                ; Generate sitemap.org automagically...
-           :sitemap-filename "sitemap.org"  ; ... call it sitemap.org (it's the default)...
-           :sitemap-title "Sitemap"         ; ... with title 'Sitemap'.
-           )
-
-          ("org-static"
-           :base-directory "~/note/org/"
-           :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
-           :publishing-directory "~/note/public_html/"
-           :recursive t
-           :publishing-function org-publish-attachment
-           )
-
-          ("org" :components ("org-notes" "org-static"))
-          ))
-  ;; 修复搜索时出现 error code 2
-  (setq counsel-ag-base-command "ag -M 240 --with-filename --no-heading--line-number --color never %s || true")
-  (setq counsel-rg-base-command "rg -M 240 --with-filename --no-heading--line-number --color never %s || true")
-  )
+)
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
@@ -1653,7 +1526,22 @@ This function is called at the very end of Spacemacs initialization."
  ;; If there is more than one, they won't work right.
  '(ansi-color-faces-vector
    [default bold shadow italic underline bold bold-italic bold])
- '(browse-url-browser-function 'w3m-browse-url)
+ '(browse-url-browser-function 'browse-url-default-browser)
+ '(ein:output-area-inlined-images t)
+ '(evil-surround-pairs-alist
+   '((40 "(" . ")")
+     (91 "[" . "]")
+     (123 "{" . "}")
+     (41 "(" . ")")
+     (93 "[" . "]")
+     (125 "{" . "}")
+     (35 "#{" . "}")
+     (98 "(" . ")")
+     (66 "{" . "}")
+     (62 "<" . ">")
+     (116 . evil-surround-read-tag)
+     (60 . evil-surround-read-tag)
+     (102 . evil-surround-function)))
  '(evil-want-Y-yank-to-eol nil)
  '(highlight-parentheses-colors '("#3cafa5" "#c49619" "#3c98e0" "#7a7ed2" "#93a61a"))
  '(hl-todo-keyword-faces
@@ -1668,7 +1556,7 @@ This function is called at the very end of Spacemacs initialization."
      ("NOTE" . "#b1951d")
      ("KLUDGE" . "#b1951d")
      ("HACK" . "#b1951d")
-     ("TEMP" . "#b1951d")
+     ("TEMP" . "#b195d")
      ("FIXME" . "#dc752f")
      ("XXX+" . "#dc752f")
      ("\\?\\?\\?+" . "#dc752f")))
@@ -1692,14 +1580,15 @@ This function is called at the very end of Spacemacs initialization."
  '(org-src-window-setup 'split-window-below)
  '(org-tags-exclude-from-inheritance '("NOTE" "ARTICAL"))
  '(package-selected-packages
-   '(helm-emms emms-state emms helm-w3m w3m counsel-dash helm helm-core ivy-rich wgrep smex lsp-ivy ivy-yasnippet ivy-xref ivy-rtags ivy-purpose ivy-hydra ivy-avy counsel-projectile counsel-css web-mode web-beautify company-web conda org-roam-server ox-hugo org-roam emacsql-sqlite3 org-journal treemacs-all-the-icons srefactor lsp-latex helm-rtags google-c-style flycheck-ycmd ycmd request-deferred flycheck-rtags rtags disaster cpp-auto-include ccls tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode web-completion-data add-node-modules-path graphviz-dot-mode auctex ein polymode anaphora websocket youdao-dictionary names chinese-word-at-point fcitx pyim pyim-basedict xr pangu-spacing find-by-pinyin-dired chinese-conv ace-pinyin pinyinlib company-quickhelp zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme modus-vivendi-theme modus-operandi-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme kaolin-themes jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme eziam-theme exotica-theme espresso-theme dracula-theme doom-themes django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme chocolate-theme autothemer cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme grip-mode github-search github-clone gist gh marshal logito pcache unfill mwim company-statistics lsp-ui lsp-origami helm-lsp pos-tip flyspell-popup origami helm-dash dash-docs dash-at-point xterm-color vterm terminal-here shell-pop multi-term eshell-z eshell-prompt-extras esh-help yapfify stickyfunc-enhance sphinx-doc pytest pyenv-mode py-isort poetry pippel pipenv pyvenv pip-requirements lsp-python-ms lsp-pyright live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope xcscope ggtags dap-mode lsp-treemacs bui lsp-mode dash-functional cython-mode counsel-gtags counsel swiper ivy company-anaconda blacken anaconda-mode pythonic yasnippet-snippets ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle restart-emacs rainbow-delimiters popwin pcre2el password-generator paradox overseer orgit org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nameless move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy forge font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
+   '(protobuf-mode toml-mode ron-mode racer rust-mode flycheck-rust cargo jupyter zmq helm-emms emms-state emms helm-w3m w3m counsel-dash helm helm-core ivy-rich wgrep smex lsp-ivy ivy-yasnippet ivy-xref ivy-rtags ivy-purpose ivy-hydra ivy-avy counsel-projectile counsel-css web-mode web-beautify company-web conda org-roam-server ox-hugo org-roam emacsql-sqlite3 org-journal treemacs-all-the-icons srefactor lsp-latex helm-rtags google-c-style flycheck-ycmd ycmd request-deferred flycheck-rtags rtags disaster cpp-auto-include ccls tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode web-completion-data add-node-modules-path graphviz-dot-mode auctex ein polymode anaphora websocket youdao-dictionary names chinese-word-at-point fcitx pyim pyim-basedict xr pangu-spacing find-by-pinyin-dired chinese-conv ace-pinyin pinyinlib company-quickhelp zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme modus-vivendi-theme modus-operandi-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme kaolin-themes jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme eziam-theme exotica-theme espresso-theme dracula-theme doom-themes django-theme darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme chocolate-theme autothemer cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme grip-mode github-search github-clone gist gh marshal logito pcache unfill mwim company-statistics lsp-ui lsp-origami helm-lsp pos-tip flyspell-popup origami helm-dash dash-docs dash-at-point xterm-color vterm terminal-here shell-pop multi-term eshell-z eshell-prompt-extras esh-help yapfify stickyfunc-enhance sphinx-doc pytest pyenv-mode py-isort poetry pippel pipenv pyvenv pip-requirements lsp-python-ms lsp-pyright live-py-mode importmagic epc ctable concurrent deferred helm-pydoc helm-gtags helm-cscope xcscope ggtags dap-mode lsp-treemacs bui lsp-mode dash-functional cython-mode counsel-gtags counsel swiper ivy company-anaconda blacken anaconda-mode pythonic yasnippet-snippets ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle restart-emacs rainbow-delimiters popwin pcre2el password-generator paradox overseer orgit org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-brain open-junk-file nameless move-text mmm-mode markdown-toc magit-svn magit-section magit-gitflow macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-ls-git helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ gh-md fuzzy forge font-lock+ flyspell-correct-helm flycheck-pos-tip flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell))
  '(paradox-github-token t)
  '(pdf-view-midnight-colors '("#b2b2b2" . "#292b2e"))
  '(pyim-dicts nil)
  '(w3m-search-default-engine "baidu")
  '(w3m-search-engine-alist
    '(("baidu" "https://www.baidu.com/s?wd=%s" utf-8)
-     ("google" "https://www.google.com/search?q=%s&ie=utf-8&oe=utf-8&gbv=1" utf-8))))
+     ("google" "https://www.google.com/search?q=%s&ie=utf-8&oe=utf-8&gbv=1" utf-8)))
+ '(warning-suppress-types '((yasnippet backquote-change))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

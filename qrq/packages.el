@@ -34,6 +34,9 @@
     org-roam-server
     (org-roam-server :location elpa)
     pyim
+    websocket
+    zmq
+    jupyter
     )
   "The list of Lisp packages required by the qrq layer.
 
@@ -80,6 +83,40 @@ Each entry is either:
     (require 'org-roam-protocol))
     (add-hook 'after-init-hook 'org-roam-mode)
   )
+
+(defun qrq/init-websocket ()
+  (use-package websocket
+    :ensure t
+    :init))
+
+(defun qrq/init-zmq ()
+  (use-package zmq
+    :ensure t
+    :init))
+
+(defun qrq/init-jupyter ()
+  (use-package jupyter
+    :ensure t
+    :init
+    :config
+    (setq org-babel-default-header-args:ipython '((:async . "t")
+                                                  (:session . "cv")
+                                                  (:kernel . "cv")
+                                                  ))
+    (setq org-confirm-babel-evaluate nil)   ;don't prompt me to confirm everytime I want to evaluate a block
+
+    ;; display/update images in the buffer after I evaluate
+    (add-hook 'org-babel-after-execute-hook 'org-display-inline-images 'append)
+
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '(
+       (python . t)
+       (emacs-lisp . t)
+       (jupyter . t)
+       ))
+    ))
+
 (defun qrq/pre-init-pyim ()
   ;; 只保留最基础的分词功能，保证可以在中文之间进行词间跳转
   (use-package pyim
